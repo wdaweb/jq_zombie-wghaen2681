@@ -21,7 +21,7 @@
     #grenade {
       width: 70px;
       height: 70px;
-      background-image: url(./grenade.png);
+      background-image: url(./img/grenade.png);
       background-size: cover;
       background-position: center;
       position: absolute;
@@ -30,12 +30,36 @@
       top: 320px;
     }
 
+    #bullet {
+      width: 80px;
+      height: 80px;
+      background: url(./img/bullet-cartoon.png);
+      background-size: contain;
+      position: absolute;
+      z-index: 50;
+      left: 20px;
+      top: 85vh;
+    }
+
     #game {
       width: 400px;
       height: 400px;
       background: black;
       overflow: hidden;
       position: relative;
+    }
+
+    #game-background {
+      width: 400px;
+      height: 400px;
+      background: url(./img/halloween/2.gif);
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center; 
+      opacity: 0.16;
+      overflow: hidden;
+      position: relative;
+      z-index: 30;
     }
 
     #game img {
@@ -48,7 +72,7 @@
     }
 
     .aim {
-      cursor: url(./cursor_white.png) 50 50, auto;
+      cursor: url(./img/cursor_white.png) 50 50, auto;
     }
   </style>
 </head>
@@ -56,17 +80,22 @@
 <body>
   <div id="container">
     <div id="grenade"></div>
+    <!-- 4/20 做到 bullet 數量數字顯示（測試中） -------------------------------------->
+    <div id="bullet"></div>
     <div id="game" class="aim">
+      <div id="game-background"></div>
     </div>
     <br>
     <input type="button" value="開始" id="btn-start">
     <input type="button" value="全螢幕" id="btn-full-screen">
     <br>
-    <p>分數: <span id="text-score">0</span></p>
+    <p>分數: <span id="text-score">0</span> 分</p>
     <p>剩餘: <span id="text-time">0</span> 秒</p>
   </div>
+
+
   <script src="./jquery-3.6.0.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+  <script src="http://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
   <script>
     // 分數
     let score = 0
@@ -74,7 +103,10 @@
     let countdown = 30
     // 倒數計時
     let timer = 0
+    // 全螢幕判斷項 
+    let index = $('#btn-full-screen').val()
 
+    // 設定殭屍隨機走動 
     const move = (zb) => {
       zb.stop().animate({
         left: Math.round(Math.random() * 70) + '%',
@@ -84,8 +116,23 @@
       })
     }
 
-    $('#grenade').hide();
+    // 隱藏 grenade 物件 
+    $('#grenade').hide()
+    $('#grenade').css({
+      'user-select': 'none',
+      '-webkit-user-drag': 'none',
+      'pointer-events': 'none'
+    })
+    
+    // 隱藏 bullet 物件 
+    $('#bullet').hide()
+      $('#bullet').css({
+          'user-select': 'none',
+          '-webkit-user-drag': 'none',
+          'pointer-events': 'none'
+      })
 
+    // 使開始按鈕在被點擊後失效  
     $('#btn-start').click(function () {
       $(this).attr('disabled', true)
 
@@ -95,21 +142,34 @@
       countdown = 30
       $('#text-time').text(countdown)
 
+      $('#grenade').hide()
+      $('#grenade').css({
+          'user-select': 'none',
+          '-webkit-user-drag': 'none',
+          'pointer-events': 'none'
+      })
+
       timer = setInterval(() => {
         // 倒數
         countdown--
         $('#text-time').text(countdown)
 
         let rand = Math.round(Math.random() * 10)
-        // 隨機決定是產生殭屍 
+        // 隨機決定是否產生殭屍 
         if (rand > 2 && $('#game img').length < 10) {
-          const zb = $(`<img src="./1.gif" alt="" style="left:${Math.round(Math.random() * 70)}%;top:${Math.round(Math.random() * 70)}%">`)
+          const zb = $(`<img src="./img/1.gif" alt="" style="left:${Math.round(Math.random() * 70)}%;top:${Math.round(Math.random() * 70)}%;z-index:70;">`)
           $('#game').append(zb)
           move(zb)
         }
+        index = $('#btn-full-screen').val()
         // 隨機決定是否提供手榴彈  
-        if (rand > 8) {
-
+        if (index === '退出全螢幕' && rand > 9) { 
+          $('#grenade').show();
+          $('#grenade').css({
+            'user-select': 'text',
+            '-webkit-user-drag': 'element',
+            'pointer-events': 'auto'
+          })
         }
         // 時間到
         if (countdown <= 0) {
@@ -125,8 +185,9 @@
       }, 1000);
     })
 
+    // 設定殭屍被點擊的效果 
     $('#game').on('click', 'img', function () {
-      $(this).attr('src', './blood.png')
+      $(this).attr('src', './img/blood.png')
       $(this).stop()
       // 忽略點擊事件、無法點擊和選取
       $(this).css({
@@ -137,19 +198,62 @@
       score++
       $('#text-score').text(score)
     })
+    
+    // 設定手榴彈被點擊的效果 
+    $('#grenade').click( function () {
+      $('#grenade').hide() 
+      $('#game img').attr('src', './img/blood.png')
+      $('#game img').stop()
+      // 忽略點擊事件、無法點擊和選取
+      $(this).css({
+        'user-select': 'none',
+        '-webkit-user-drag': 'none',
+        'pointer-events': 'none'
+      })
+      
+      // 設定加分 
+      score += $('#game img').length
+      $('#text-score').text(score)
 
+    })
+    
     // 設定全螢幕按鈕 
     $('#btn-full-screen').click(function () {
-      const index = $('#btn-full-screen').val()
+      index = $('#btn-full-screen').val()
       if (index === '全螢幕') {
         $('#game').css('width', '100vw')
         $('#game').css('height', '100vh')
+        $('#game-background').css('width', '100vw')
+        $('#game-background').css('height', '100vh')
+
+
         $('#container').css('top', '0px')
+        $('#bullet').show();
+        $('#bullet').css({
+          'user-select': 'text',
+          '-webkit-user-drag': 'element',
+          'pointer-events': 'auto'
+        })
         $('#btn-full-screen').val('退出全螢幕')
       } else {
         $('#game').css('width', '400px')
         $('#game').css('height', '400px')
+        $('#game-background').css('width', '400px')
+        $('#game-background').css('height', '400px')
+
         $('#container').css('top', '180px')
+        $('#grenade').hide()
+        $('#grenade').css({
+            'user-select': 'none',
+            '-webkit-user-drag': 'none',
+            'pointer-events': 'none'
+        })
+        $('#bullet').hide()
+        $('#bullet').css({
+            'user-select': 'none',
+            '-webkit-user-drag': 'none',
+            'pointer-events': 'none'
+        })
         $('#btn-full-screen').val('全螢幕')
       }
     })
